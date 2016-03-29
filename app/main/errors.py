@@ -12,6 +12,10 @@ def page_not_found(e):
 
 
 @main.app_errorhandler(500)
-def page_not_found(e):
+def internal_server_error(e):
     return render_template('500.html'), 500
+
+@main.app_errorhandler(403)
+def forbidden(e):
+    return render_template('403.html'), 500
 
