@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
 
-{% block title %} 用户注册 {% endblock %}
+{% block title %} 密码修改 {% endblock %}
 
 {% block page_content %}
 <div class="page-header">
-    <h1>用户注册</h1>
+    <h1>修改密码 - {{ current_user.username }}</h1>
 </div>
 
 <div class="col-md-4">

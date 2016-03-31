@@ -47,6 +47,7 @@ class Role(db.Model):
             db.session.add(role)
         db.session.commit()
 
+
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
@@ -80,7 +81,7 @@ class User(UserMixin, db.Model):
 
     # 判断是否有权限
     def can(self, permissions):
-        return self.role is not None and (self.role.permissions & permissions) == permissions
+       return self.role is not None and (self.role.permissions & permissions) == permissions
 
     # 判断是否是超级管理员
     def is_administrator(self):
@@ -103,8 +104,65 @@ from . import login_manager
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-#
+# 视频标签关系表
+videotags = db.Table('videotags',
+                     db.Column('video_id', db.Integer, db.ForeignKey('videos.id')),
+                     db.Column('tag_id', db.Integer, db.ForeignKey('tags.id'))
+                     )
 
-# 视频标签表
+# 标签关系表
+class TagRelation(db.Model):
+    __tablename__ = 'tagrs'
+    # 标签编号
+    id = db.Column(db.Integer, db.ForeignKey('tags.id'), primary_key=True, index=True)
+    # 子标签编号
+    child_id = db.Column(db.Integer, db.ForeignKey('tags.id'), primary_key=True, index=True)
+
+
+# 标签表
+class Tag(db.Model):
+    __tablename__ = 'tags'
+    # 标签编号
+    id = db.Column(db.Integer, primary_key=True)
+    # 标签名称
+    name = db.Column(db.String(64))
+    # 子标签
+    sub_tags = db.relationship('TagRelation', foreign_keys=[TagRelation.child_id],
+                               backref=db.backref('pre_tags', lazy='joined'),
+                               lazy='dynamic',
+                               cascade='all, delete-orphan')
+    # 父标签
+    pre_tags = db.relationship('TagRelation', foreign_keys=[TagRelation.id],
+                               backref=db.backref('sub_tags', lazy='joined'),
+                               cascade='all, delete-orphan')
+    #添加默认标签
+    @staticmethod
+    def add_empty_tag():
+        tag = Tag.query.filter_by(id=1).first()
+        if tag is None:
+            tag = Tag(name=u'无', id=1)
+            db.session.add(tag)
+            db.session.commit()
+
+
 
 # 视频信息表
+class Video(db.Model):
+    __tablename__ = 'videos'
+    # 视频编号
+    id = db.Column(db.Integer, primary_key=True)
+    # 视频上传者
+    uploader = db.Column(db.Integer, db.ForeignKey('users.id'))
+    # 视频名称
+    name = db.Column(db.String(128), nullable=False)
+    # 上传日期
+    upload_date = db.Column(db.Date, nullable=False)
+    # 文件路径
+    path = db.Column(db.String(512), nullable=False)
+    # 视频标签
+    tags = db.relationship('Tag',
+                           secondary=videotags,
+                           backref=db.backref('videos', lazy='dynamic'),
+                           lazy='dynamic')
+
+
