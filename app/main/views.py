@@ -2,17 +2,20 @@
 #coding=utf-8
 
 # 在蓝本中定义程序路由
+from __future__ import print_function
 
-from flask import abort, flash
+from flask import abort, flash, request
 from datetime import datetime
 from flask import render_template, session, redirect, url_for
 from flask_login import login_required, current_user
 
 from . import main
-from .forms import EditProfileForm, EditTagForm
+from .forms import EditProfileForm
 from .. import db
-from ..models import User
+from ..models import User, Tag
 from ..decorators import admin_required
+
+from sys import stderr
 
 @main.route('/', methods=['GET', 'POST'])
 def index():
@@ -30,15 +33,6 @@ def user(username):
 @login_required
 def edit_profile():
     form = EditProfileForm()
-    if form.validate_on_submit():
-        current_user.password_
     return render_template('edit_profile.html', form=form)
 
-# 管理员页面，可以添加修改标签，赋予上传权限
-@main.route('/admin-edit', methods=['GET', 'POST'])
-@login_required
-@admin_required
-def admin_edit():
-    edit_tag_form = EditTagForm()
-    return render_template('admin_edit.html', edit_tag_form=edit_tag_form)
 

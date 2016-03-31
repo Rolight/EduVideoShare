@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %} 控制台 {% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h1>管理员控制台</h1>
+</div>
+
+<div class="col-md-4">
+    <h1>视频标签添加</h1>
+    {{ wtf.quick_form(edit_tag_form) }}
+</div>
+
+{% endblock %}

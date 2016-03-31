@@ -34,9 +34,9 @@ class Role(db.Model):
     def insert_roles():
         # 一共三种角色，视频上传者，管理员和普通用户
         roles = {
-            'User': (0, True),
-            'Uploader': (Permission.UPLOAD_VIDEO, False),
-            'Admin': (0xff, False)
+            u'User': (0, True),
+            u'Uploader': (Permission.UPLOAD_VIDEO, False),
+            u'Admin': (0xff, False)
         }
         for r in roles:
             role = Role.query.filter_by(name=r).first()
@@ -110,37 +110,47 @@ videotags = db.Table('videotags',
                      db.Column('tag_id', db.Integer, db.ForeignKey('tags.id'))
                      )
 
-# 标签关系表
-class TagRelation(db.Model):
-    __tablename__ = 'tagrs'
-    # 标签编号
-    id = db.Column(db.Integer, db.ForeignKey('tags.id'), primary_key=True, index=True)
-    # 子标签编号
-    child_id = db.Column(db.Integer, db.ForeignKey('tags.id'), primary_key=True, index=True)
+#class TagRelation(db.Model):
+#    __tablename__ = 'tagrs'
+#    # 标签编号
+#    id = db.Column(db.Integer, db.ForeignKey('tags.id'), primary_key=True, index=True)
+#    # 子标签编号
+#    child_id = db.Column(db.Integer, db.ForeignKey('tags.id'), primary_key=True, index=True)
+
 
 
 # 标签表
 class Tag(db.Model):
     __tablename__ = 'tags'
     # 标签编号
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, index=True)
     # 标签名称
-    name = db.Column(db.String(64))
+    name = db.Column(db.String(64), index=True)
+
     # 子标签
-    sub_tags = db.relationship('TagRelation', foreign_keys=[TagRelation.child_id],
-                               backref=db.backref('pre_tags', lazy='joined'),
-                               lazy='dynamic',
-                               cascade='all, delete-orphan')
+    sub_tag = db.relationship('Tag', backref=db.backref('sub_tags', cascade="all, delete-orphan", passive_deletes=True),
+                              remote_side=id, cascade='delete, delete-orphan', single_parent=True, passive_deletes=True)
+    #sub_tags = db.relationship('TagRelation', foreign_keys=[TagRelation.id],
+    #                           backref=db.backref('pre_tags', lazy='joined'),
+    #                           lazy='dynamic',
+    #                           cascade='delete, delete-orphan',
+    #                           single_parent=True)
     # 父标签
-    pre_tags = db.relationship('TagRelation', foreign_keys=[TagRelation.id],
-                               backref=db.backref('sub_tags', lazy='joined'),
-                               cascade='all, delete-orphan')
+    pre_tag = db.Column(db.Integer, db.ForeignKey('tags.id', ondelete='CASCADE', onupdate='CASCADE'))
+    #
+    #pre_tags = db.relationship('TagRelation', foreign_keys=[TagRelation.child_id],
+    #                           backref=db.backref('sub_tags', lazy='joined'),
+    #                           cascade='delete, delete-orphan',
+    #                           single_parent=True)
+    # 获取父标签
+    def get_pre_tag(self):
+        return Tag.query.filter_by(id=self.pre_tag).first()
     #添加默认标签
     @staticmethod
     def add_empty_tag():
         tag = Tag.query.filter_by(id=1).first()
         if tag is None:
-            tag = Tag(name=u'无', id=1)
+            tag = Tag(name=u'无', id=1, pre_tag=1)
             db.session.add(tag)
             db.session.commit()
 
